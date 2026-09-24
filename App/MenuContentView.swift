@@ -5,7 +5,6 @@ import SwiftUI
 struct MenuContentView: View {
     @ObservedObject var monitor: SessionMonitor
     @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
-    @State private var listHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -28,25 +27,18 @@ struct MenuContentView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
             } else {
-                ScrollView {
-                    TimelineView(.periodic(from: .now, by: 30)) { context in
-                        VStack(spacing: 10) {
-                            ForEach(monitor.sessions) { session in
-                                SessionRowView(session: session, now: context.date,
-                                               onOpen: opener(for: session))
-                                    .contentShape(Rectangle())
-                                    .contextMenu { actions(for: session) }
-                            }
-                        }
+                TimelineView(.periodic(from: .now, by: 30)) { context in
+                    // The menu bar window shrinks to fit its content, and a scroll
+                    // view has no height of its own, so it would collapse to
+                    // nothing. Only scroll, at a fixed height, when the rows
+                    // wouldn't fit anyway.
+                    if monitor.sessions.count <= 6 {
+                        sessionRows(now: context.date)
+                    } else {
+                        ScrollView { sessionRows(now: context.date) }
+                            .frame(height: 380)
                     }
-                    .background(GeometryReader { proxy in
-                        Color.clear.preference(key: ListHeightKey.self, value: proxy.size.height)
-                    })
                 }
-                // A scroll view has no height of its own, and the menu bar window
-                // shrinks to fit, so size it to the rows (up to a limit).
-                .frame(height: min(listHeight, 380))
-                .onPreferenceChange(ListHeightKey.self) { listHeight = $0 }
             }
 
             if let error = monitor.lastError {
@@ -81,6 +73,16 @@ struct MenuContentView: View {
             Text(awaiting == 0 ? "Nothing waiting on you" : "\(awaiting) waiting on you")
                 .font(.caption)
                 .foregroundStyle(awaiting == 0 ? Color.secondary : Color.orange)
+        }
+    }
+
+    private func sessionRows(now: Date) -> some View {
+        VStack(spacing: 10) {
+            ForEach(monitor.sessions) { session in
+                SessionRowView(session: session, now: now, onOpen: opener(for: session))
+                    .contentShape(Rectangle())
+                    .contextMenu { actions(for: session) }
+            }
         }
     }
 
@@ -121,12 +123,5 @@ struct MenuContentView: View {
         } catch {
             opensAtLogin = SMAppService.mainApp.status == .enabled
         }
-    }
-}
-
-private struct ListHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
     }
 }
