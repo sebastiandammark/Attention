@@ -16,12 +16,30 @@ struct SessionRowView: View {
     let session: SessionSummary
     let now: Date
     var showsDetail = true
-    /// When set, the project name is a link that calls this.
+    /// When set, the whole row is a button that calls this.
     var onOpen: (() -> Void)?
 
     @State private var isHovering = false
 
     var body: some View {
+        if let onOpen {
+            Button(action: onOpen) {
+                content
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .contentShape(Rectangle())
+                    .background(isHovering ? Color.primary.opacity(0.08) : .clear,
+                                in: RoundedRectangle(cornerRadius: 6))
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovering = $0 }
+            .help("Go to this session")
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: session.status.symbolName)
                 .foregroundStyle(session.status.color)
@@ -49,13 +67,8 @@ struct SessionRowView: View {
     @ViewBuilder
     private var title: some View {
         let name = Text(session.project).font(.system(.callout, weight: .semibold))
-        if let onOpen {
-            Button(action: onOpen) {
-                name.underline(isHovering).foregroundStyle(Color.accentColor).lineLimit(1)
-            }
-            .buttonStyle(.plain)
-            .onHover { isHovering = $0 }
-            .help("Go to this session")
+        if onOpen != nil {
+            name.underline(isHovering).foregroundStyle(Color.accentColor).lineLimit(1)
         } else {
             name.lineLimit(1)
         }
