@@ -56,6 +56,14 @@ struct SessionSummary: Codable, Hashable, Identifiable {
     var project: String {
         cwd.isEmpty ? "Claude Code" : (cwd as NSString).lastPathComponent
     }
+
+    /// Opens the Attention app, which brings this session to the front. The widget
+    /// links rows to this; it's `nil` when the app wouldn't know where to go.
+    var openURL: URL? {
+        host == nil ? nil : URL(string: "\(Self.urlScheme)://session/\(id)")
+    }
+
+    static let urlScheme = "dammark-attention"
 }
 
 struct SessionHost: Codable, Hashable {

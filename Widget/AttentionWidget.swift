@@ -78,6 +78,9 @@ struct AttentionWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // A small widget is a single tap target, so it goes to the session most
+        // likely to need you.
+        .widgetURL(snapshot.sessions.first(where: { $0.status.awaitsUser })?.openURL)
     }
 
     private func list(_ snapshot: AttentionSnapshot) -> some View {
@@ -107,7 +110,13 @@ struct AttentionWidgetView: View {
                 Spacer()
             } else {
                 ForEach(shown) { session in
-                    SessionRowView(session: session, now: entry.date)
+                    if let url = session.openURL {
+                        Link(destination: url) {
+                            SessionRowView(session: session, now: entry.date)
+                        }
+                    } else {
+                        SessionRowView(session: session, now: entry.date)
+                    }
                 }
                 Spacer(minLength: 0)
                 if snapshot.sessions.count > shown.count {

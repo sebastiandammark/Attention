@@ -39,6 +39,10 @@ targets:
         LSUIElement: true
         NSAppleEventsUsageDescription: Attention switches to the Terminal or iTerm tab a Claude Code session runs in.
         AttentionAppGroup: $(APP_GROUP_ID)
+        # Widget rows link to dammark-attention://session/<id>.
+        CFBundleURLTypes:
+          - CFBundleURLName: dk.dammark.attention
+            CFBundleURLSchemes: [dammark-attention]
     entitlements:
       path: Support/Attention.entitlements
       properties:
