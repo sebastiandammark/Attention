@@ -52,6 +52,8 @@ struct SessionSummary: Codable, Hashable, Identifiable {
     var detail: String?
     /// The app and terminal the session runs in, if the hook could tell.
     var host: SessionHost?
+    /// The title Claude gave the session, as shown in the Claude app's sidebar.
+    var title: String?
 
     var project: String {
         cwd.isEmpty ? "Claude Code" : (cwd as NSString).lastPathComponent
@@ -60,7 +62,7 @@ struct SessionSummary: Codable, Hashable, Identifiable {
     /// Opens the Attention app, which brings this session to the front. The widget
     /// links rows to this; it's `nil` when the app wouldn't know where to go.
     var openURL: URL? {
-        host == nil ? nil : URL(string: "\(Self.urlScheme)://session/\(id)")
+        host == nil && title == nil ? nil : URL(string: "\(Self.urlScheme)://session/\(id)")
     }
 
     static let urlScheme = "dammark-attention"

@@ -66,7 +66,7 @@ struct SessionRowView: View {
 
     @ViewBuilder
     private var title: some View {
-        let name = Text(session.project).font(.system(.callout, weight: .semibold))
+        let name = Text(session.title ?? session.project).font(.system(.callout, weight: .semibold))
         if onOpen != nil {
             name.underline(isHovering).foregroundStyle(Color.accentColor).lineLimit(1)
         } else {

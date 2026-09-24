@@ -42,7 +42,10 @@ widget, to go to it. Clicking the small widget goes to the top session waiting
 on you. In Terminal and iTerm
 this selects the tab it runs in (macOS asks once for permission to control
 them). In VS Code, Cursor and Windsurf it brings up the window for the project,
-and in any other app it brings the app to the front. The hook notes where each
+and in the Claude desktop app it clicks the session in the sidebar. That uses
+the title Claude gave the session, which the menu and widget also show, and needs
+Accessibility permission (System Settings ▸ Privacy & Security ▸ Accessibility).
+In any other app it brings the app to the front. The hook notes where each
 session runs the first time it fires for that session, so after updating the
 app, click **Reinstall Hooks**. Sessions that were already open become links on
 their next event.

@@ -90,8 +90,28 @@ struct SessionReader {
             status: status,
             statusSince: since,
             detail: detail.map(Self.oneLine),
-            host: loadHost(dir.appendingPathComponent("host.json"))
+            host: loadHost(dir.appendingPathComponent("host.json")),
+            title: events.values.lazy.compactMap { $0.string("transcript_path") }.first.flatMap(Self.customTitle)
         )
+    }
+
+    /// Claude keeps a session's title in `<session id>/custom-title.json` next to its transcript.
+    private static func customTitle(transcriptPath: String) -> String? {
+        let url = URL(fileURLWithPath: transcriptPath).deletingPathExtension()
+            .appendingPathComponent("custom-title.json")
+        guard let data = try? Data(contentsOf: url),
+              let object = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+        else { return nil }
+        var title: String?
+        if let string = object as? String {
+            title = string
+        } else if let dict = object as? [String: Any] {
+            title = (dict["title"] ?? dict["customTitle"] ?? dict["custom_title"]) as? String
+                ?? dict.first(where: { $0.key.lowercased().contains("title") })?.value as? String
+        }
+        guard let title else { return nil }
+        let line = oneLine(title)
+        return line.isEmpty ? nil : line
     }
 
     private func loadHost(_ url: URL) -> SessionHost? {
