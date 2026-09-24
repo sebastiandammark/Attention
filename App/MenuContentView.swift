@@ -5,6 +5,7 @@ import SwiftUI
 struct MenuContentView: View {
     @ObservedObject var monitor: SessionMonitor
     @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var listHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -31,14 +32,21 @@ struct MenuContentView: View {
                     TimelineView(.periodic(from: .now, by: 30)) { context in
                         VStack(spacing: 10) {
                             ForEach(monitor.sessions) { session in
-                                SessionRowView(session: session, now: context.date)
+                                SessionRowView(session: session, now: context.date,
+                                               onOpen: opener(for: session))
                                     .contentShape(Rectangle())
                                     .contextMenu { actions(for: session) }
                             }
                         }
                     }
+                    .background(GeometryReader { proxy in
+                        Color.clear.preference(key: ListHeightKey.self, value: proxy.size.height)
+                    })
                 }
-                .frame(maxHeight: 380)
+                // A scroll view has no height of its own, and the menu bar window
+                // shrinks to fit, so size it to the rows (up to a limit).
+                .frame(height: min(listHeight, 380))
+                .onPreferenceChange(ListHeightKey.self) { listHeight = $0 }
             }
 
             if let error = monitor.lastError {
@@ -76,8 +84,16 @@ struct MenuContentView: View {
         }
     }
 
+    private func opener(for session: SessionSummary) -> (() -> Void)? {
+        guard SessionOpener.canOpen(session) else { return nil }
+        return { SessionOpener.open(session) }
+    }
+
     @ViewBuilder
     private func actions(for session: SessionSummary) -> some View {
+        if SessionOpener.canOpen(session) {
+            Button("Go to Session") { SessionOpener.open(session) }
+        }
         if !session.cwd.isEmpty {
             Button("Show Folder in Finder") {
                 NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: session.cwd)
@@ -105,5 +121,12 @@ struct MenuContentView: View {
         } catch {
             opensAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+}
+
+private struct ListHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

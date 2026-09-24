@@ -37,6 +37,7 @@ targets:
         LSApplicationCategoryType: public.app-category.developer-tools
         # Menu bar only: no Dock icon.
         LSUIElement: true
+        NSAppleEventsUsageDescription: Attention switches to the Terminal or iTerm tab a Claude Code session runs in.
         AttentionAppGroup: $(APP_GROUP_ID)
     entitlements:
       path: Support/Attention.entitlements
@@ -44,6 +45,8 @@ targets:
         # Not sandboxed: the app has to read ~/.claude and edit ~/.claude/settings.json.
         com.apple.security.application-groups:
           - $(APP_GROUP_ID)
+        # Lets it ask Terminal and iTerm to select a session's tab.
+        com.apple.security.automation.apple-events: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dk.dammark.attention

@@ -32,6 +32,19 @@ run '{"session_id":"'$id'","cwd":"/a","hook_event_name":"Notification","message"
 python3 -c 'import json,sys; [json.load(open(p)) for p in sys.argv[1:]]' "$sessions/$id"/*.json || fail "invalid JSON written"
 [[ -z "$(ls -A "$sessions/$id" | grep '^\.' || true)" ]] || fail "temp files left behind"
 
+host="$sessions/$id/host.json"
+[[ -f "$host" ]] || fail "host not recorded"
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$host" || fail "invalid host JSON"
+rm -f "$host"
+printf '%s' '{"session_id":"'$id'","hook_event_name":"Stop"}' | __CFBundleIdentifier=com.apple.Terminal "$hook"
+[[ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["bundle_id"])' "$host")" == com.apple.Terminal ]] \
+  || fail "bundle id not recorded"
+printf '%s' '{"session_id":"'$id'","hook_event_name":"Stop"}' | __CFBundleIdentifier=com.iterm2 "$hook"
+grep -q com.iterm2 "$host" && fail "host should be recorded once per session"
+rm -f "$host"
+printf '%s' '{"session_id":"'$id'","hook_event_name":"Stop"}' | __CFBundleIdentifier='x","tty":"evil' "$hook"
+grep -q evil "$host" && fail "unsafe bundle id not rejected"
+
 run '{"session_id":"../../etc","hook_event_name":"Stop"}'
 [[ ! -e "$ATTENTION_STATE_DIR/etc" ]] || fail "path traversal not rejected"
 run 'not json at all'

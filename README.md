@@ -37,6 +37,14 @@ Sessions drop off when Claude Code ends them, or after 12 hours with no activity
 (for example, a terminal closed mid-session). Right-click a session in the menu
 bar window to dismiss it, show its folder, or copy a `claude --resume` command.
 
+Click a session's name in the menu bar window to go to it. In Terminal and iTerm
+this selects the tab it runs in (macOS asks once for permission to control
+them). In VS Code, Cursor and Windsurf it brings up the window for the project,
+and in any other app it brings the app to the front. The hook notes where each
+session runs the first time it fires for that session, so after updating the
+app, click **Reinstall Hooks**. Sessions that were already open become links on
+their next event.
+
 ## Setup
 
 You need macOS 14 or later, Xcode 15 or later, and

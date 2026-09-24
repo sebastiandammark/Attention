@@ -48,6 +48,28 @@ case "$event" in
 esac
 
 mkdir -p "$session_dir" || exit 0
+
+# Once per session, note the app and terminal tab it runs in, so the Attention
+# app can bring it to the front. Hooks have no terminal of their own, so look
+# for the nearest parent process that does.
+host_file="$session_dir/host.json"
+if [[ ! -e "$host_file" ]]; then
+  pid=$$ tty=""
+  for _ in 1 2 3 4 5 6; do
+    tty=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+    [[ "$tty" =~ ^tty[A-Za-z0-9]+$ ]] && break
+    tty=""
+    pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+    [[ "$pid" =~ ^[0-9]+$ && "$pid" -gt 1 ]] || break
+  done
+  # macOS sets __CFBundleIdentifier for everything an app launches, shells included.
+  bundle_id=${__CFBundleIdentifier:-}
+  [[ "$bundle_id" =~ ^[A-Za-z0-9._-]+$ ]] || bundle_id=""
+  tmp=$(mktemp "$session_dir/.host.XXXXXX") \
+    && printf '{"tty":"%s","bundle_id":"%s"}\n' "${tty:+/dev/$tty}" "$bundle_id" > "$tmp" \
+    && mv -f "$tmp" "$host_file"
+fi
+
 now=$(perl -MTime::HiRes=time -e 'printf "%.3f", time' 2>/dev/null || date +%s)
 tmp=$(mktemp "$session_dir/.$event.XXXXXX") || exit 0
 printf '{"received_at":%s,"event":%s}\n' "$now" "$record" > "$tmp" \

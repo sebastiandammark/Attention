@@ -50,10 +50,19 @@ struct SessionSummary: Codable, Hashable, Identifiable {
     var statusSince: Date
     /// What Claude is asking for, or the prompt it is working on.
     var detail: String?
+    /// The app and terminal the session runs in, if the hook could tell.
+    var host: SessionHost?
 
     var project: String {
         cwd.isEmpty ? "Claude Code" : (cwd as NSString).lastPathComponent
     }
+}
+
+struct SessionHost: Codable, Hashable {
+    /// The bundle ID of the app the session runs in, such as com.apple.Terminal.
+    var bundleID: String?
+    /// The terminal device, such as /dev/ttys003, which identifies the tab.
+    var tty: String?
 }
 
 /// What the app hands to the widget through the shared App Group container.

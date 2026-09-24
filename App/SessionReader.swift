@@ -37,7 +37,7 @@ struct SessionReader {
         let files = (try? FileManager.default.contentsOfDirectory(
             at: dir, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? []
         var events: [String: Event] = [:]
-        for event in files.compactMap(loadEvent) {
+        for event in files.filter({ $0.lastPathComponent != "host.json" }).compactMap(loadEvent) {
             events[event.name] = event
         }
         // A login confirmation says nothing about whether Claude needs you.
@@ -89,8 +89,18 @@ struct SessionReader {
             cwd: latest.string("cwd") ?? events.values.lazy.compactMap { $0.string("cwd") }.first ?? "",
             status: status,
             statusSince: since,
-            detail: detail.map(Self.oneLine)
+            detail: detail.map(Self.oneLine),
+            host: loadHost(dir.appendingPathComponent("host.json"))
         )
+    }
+
+    private func loadHost(_ url: URL) -> SessionHost? {
+        guard let data = try? Data(contentsOf: url),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+        else { return nil }
+        let host = SessionHost(bundleID: object["bundle_id"].flatMap { $0.isEmpty ? nil : $0 },
+                               tty: object["tty"].flatMap { $0.isEmpty ? nil : $0 })
+        return host.bundleID == nil ? nil : host
     }
 
     private func loadEvent(_ url: URL) -> Event? {
