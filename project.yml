@@ -19,6 +19,16 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     ENABLE_HARDENED_RUNTIME: YES
 
+# One shared scheme, so Xcode doesn't make one per target and run the widget
+# extension (which opens the WidgetKit Simulator) instead of the app.
+schemes:
+  Attention:
+    build:
+      targets:
+        Attention: all
+    run:
+      config: Debug
+
 targets:
   Attention:
     type: application
